@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/concourse/faa/postfacto"
-	"github.com/concourse/faa/slackcommand"
+	"github.com/pivotal-cloudops/faa/postfacto"
+	"github.com/pivotal-cloudops/faa/slackcommand"
 )
 
 func main() {
