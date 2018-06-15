@@ -25,7 +25,7 @@ func main() {
 
 	vToken, ok := os.LookupEnv("SLACK_VERIFICATION_TOKEN")
 	if !ok {
-		panic(errors.New("Must provide SLACK_VERIFICATION_TOKEN"))
+		panic(errors.New("must provide SLACK_VERIFICATION_TOKEN"))
 	}
 
 	postfactoAPI, ok := os.LookupEnv("POSTFACTO_API")
@@ -35,12 +35,7 @@ func main() {
 
 	retroID, ok := os.LookupEnv("POSTFACTO_RETRO_ID")
 	if !ok {
-		panic(errors.New("Must provide POSTFACTO_RETRO_ID"))
-	}
-
-	techRetroID, ok := os.LookupEnv("POSTFACTO_TECH_RETRO_ID")
-	if !ok {
-		panic(errors.New("Must provide POSTFACTO_TECH_RETRO_ID"))
+		panic(errors.New("must provide POSTFACTO_RETRO_ID"))
 	}
 
 	c := &postfacto.RetroClient{
@@ -48,16 +43,10 @@ func main() {
 		ID:   retroID,
 	}
 
-	t := &postfacto.RetroClient{
-		Host: postfactoAPI,
-		ID:   techRetroID,
-	}
-
 	server := slackcommand.Server{
 		VerificationToken: vToken,
 		Delegate: &PostfactoSlackDelegate{
 			RetroClient:     c,
-			TechRetroClient: t,
 		},
 	}
 
@@ -68,7 +57,6 @@ func main() {
 
 type PostfactoSlackDelegate struct {
 	RetroClient     *postfacto.RetroClient
-	TechRetroClient *postfacto.RetroClient
 }
 
 type Command string
@@ -77,13 +65,12 @@ const (
 	CommandHappy Command = "happy"
 	CommandMeh   Command = "meh"
 	CommandSad   Command = "sad"
-	CommandTech  Command = "tech"
 )
 
 func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) {
 	parts := strings.SplitN(r.Text, " ", 2)
 	if len(parts) < 2 {
-		return "", fmt.Errorf("must be in the form of '%s [happy/meh/sad/tech] [message]'", r.Command)
+		return "", fmt.Errorf("must be in the form of '%s [happy/meh/sad] [message]'", r.Command)
 	}
 
 	c := parts[0]
@@ -104,11 +91,8 @@ func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) 
 	case CommandSad:
 		category = postfacto.CategorySad
 		client = d.RetroClient
-	case CommandTech:
-		category = postfacto.CategoryHappy
-		client = d.TechRetroClient
 	default:
-		return "", errors.New("unknown command: must provide one of 'happy', 'meh', 'sad', or 'tech'")
+		return "", errors.New("unknown command: must provide one of 'happy', 'meh' or 'sad'")
 	}
 
 	retroItem := postfacto.RetroItem{
