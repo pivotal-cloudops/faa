@@ -38,15 +38,21 @@ func main() {
 		panic(errors.New("must provide POSTFACTO_RETRO_ID"))
 	}
 
+	retroPassword, ok := os.LookupEnv("POSTFACTO_RETRO_PASSWORD")
+	if !ok {
+		panic(errors.New("must provide POSTFACTO_RETRO_PASSWORD"))
+	}
+
 	c := &postfacto.RetroClient{
 		Host: postfactoAPI,
 		ID:   retroID,
+		Password: retroPassword,
 	}
 
 	server := slackcommand.Server{
 		VerificationToken: vToken,
 		Delegate: &PostfactoSlackDelegate{
-			RetroClient:     c,
+			RetroClient: c,
 		},
 	}
 
@@ -56,7 +62,7 @@ func main() {
 }
 
 type PostfactoSlackDelegate struct {
-	RetroClient     *postfacto.RetroClient
+	RetroClient *postfacto.RetroClient
 }
 
 type Command string
@@ -76,21 +82,17 @@ func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) 
 	c := parts[0]
 	description := parts[1]
 
-	var (
-		client   *postfacto.RetroClient
-		category postfacto.Category
-	)
+	var category postfacto.Category
+
+	client := d.RetroClient
 
 	switch Command(c) {
 	case CommandHappy:
 		category = postfacto.CategoryHappy
-		client = d.RetroClient
 	case CommandMeh:
 		category = postfacto.CategoryMeh
-		client = d.RetroClient
 	case CommandSad:
 		category = postfacto.CategorySad
-		client = d.RetroClient
 	default:
 		return "", errors.New("unknown command: must provide one of 'happy', 'meh' or 'sad'")
 	}
@@ -100,7 +102,12 @@ func (d *PostfactoSlackDelegate) Handle(r slackcommand.Command) (string, error) 
 		Description: fmt.Sprintf("%s [%s]", description, r.UserName),
 	}
 
-	err := client.Add(retroItem)
+	err := client.Login()
+	if err != nil {
+		return "", err
+	}
+
+	err = client.Add(retroItem)
 	if err != nil {
 		return "", err
 	}

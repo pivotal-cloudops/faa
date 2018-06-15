@@ -4,8 +4,8 @@ applications:
   memory: 128M
   buildpack: go_buildpack
   routes:
-  - route: faa.cfapps.io
+  - route: faa.gcp.trackerred.com
   command: faa
   env:
-    GOPACKAGENAME: github.com/concourse/faa
+    GOPACKAGENAME: github.com/pivotal-cloudops/faa
   stack: cflinuxfs2
